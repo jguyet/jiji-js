@@ -13,13 +13,9 @@
   },
   "author": "Guyet Jeremy <jguyet@linepicplus.com> (https://github.io/jguyet)",
   "scripts": {
-    "compile": "rm -rf dist; tsc -p ./ --out ./dist/index.js; cp index.html ./dist/index.html"
   },
   "devDependencies": {},
-  "dependencies": {
-    "browserify": "^17.0.0",
-    "requirejs": "^2.3.6"
-  },
+  "dependencies": {},
   "description": "Tiny Framework front-end in javascript.",
   "main": "jiji.js",
   "directories": {
