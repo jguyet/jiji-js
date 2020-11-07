@@ -12,7 +12,7 @@ const Jiji = {
     customElementController: () => { return { destroy: () => {} }; },
     customElementControllerList: [],
     detectChangeVerificationFunction: () => {
-        const controller = Router.getCurrentController();
+        const controller = Jiji.Router.getCurrentController();
         document.querySelectorAll("[if]").forEach(x => {
             const operation = x.getAttribute("if");
             if (eval(`(function Main(){ try { return (${operation}); } catch (e) { return (false) } })`).call(controller)) {
@@ -54,7 +54,7 @@ const Jiji = {
         return operation;
     },
     mount: () => {
-        const controller = Router.getCurrentController();
+        const controller = Jiji.Router.getCurrentController();
 
         controller.bind = {};
         controller.binder = {};
@@ -106,7 +106,7 @@ const Jiji = {
             const callback = (e) => {
                 e.preventDefault();
                 var href = x.attributes.href.value;
-                Router.setUrl(href);
+                Jiji.Router.setUrl(href);
             };
             Jiji.customElementControllerList.push(Jiji.customElementController(x));
             x.addEventListener('click', callback);
@@ -116,7 +116,7 @@ const Jiji = {
             const callback = (e) => {
                 e.preventDefault();
                 var href = x.attributes.href.value;
-                Router.setUrl(href);
+                Jiji.Router.setUrl(href);
             };
             Jiji.customElementControllerList.push(Jiji.customElementController(x));
             x.addEventListener('click', callback);
@@ -128,7 +128,7 @@ const Jiji = {
                 e.preventDefault();
                 x.innerHTML = '<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.0" width="24px" height="24px" viewBox="0 0 128 128" xml:space="preserve"><g><path d="M75.4 126.63a11.43 11.43 0 0 1-2.1-22.65 40.9 40.9 0 0 0 30.5-30.6 11.4 11.4 0 1 1 22.27 4.87h.02a63.77 63.77 0 0 1-47.8 48.05v-.02a11.38 11.38 0 0 1-2.93.37z" fill="#ffffff" fill-opacity="1"/><animateTransform attributeName="transform" type="rotate" from="0 64 64" to="360 64 64" dur="400ms" repeatCount="indefinite"></animateTransform></g></svg>';
                 var href = x.attributes.href.value;
-                Router.setUrl(href);
+                Jiji.Router.setUrl(href);
             };
             Jiji.customElementControllerList.push(Jiji.customElementController(x));
             x.addEventListener('click', callback);
@@ -139,7 +139,7 @@ const Jiji = {
             const callback = (e) => {
                 e.preventDefault();
                 var href = x.attributes.href.value;
-                Router.setUrl(href, 'left');//left slide
+                Jiji.Router.setUrl(href, 'left');//left slide
             };
             Jiji.customElementControllerList.push(Jiji.customElementController(x));
             x.addEventListener('click', callback);
@@ -150,7 +150,7 @@ const Jiji = {
             const callback = (e) => {
                 e.preventDefault();
                 var href = x.attributes.href.value;
-                Router.setUrl(href, 'right');//right slide
+                Jiji.Router.setUrl(href, 'right');//right slide
             };
             Jiji.customElementControllerList.push(Jiji.customElementController(x));
             x.addEventListener('click', callback);
@@ -197,36 +197,36 @@ const Jiji = {
             routerSlideElement.style.backgroundColor = "white";
             routerSlideElement.style.top = "0px";
     
-            routes.forEach((route) => Router.routes[route.path] = route);
+            routes.forEach((route) => Jiji.Router.routes[route.path] = route);
     
             window.addEventListener('hashchange', () => {
                 const urlFromHash = location.hash.substr(1);
     
-                if (Router.currentRoute != urlFromHash) Router.setUrl(urlFromHash);
+                if (Jiji.Router.currentRoute != urlFromHash) Jiji.Router.setUrl(urlFromHash);
             });
         },
         getCurrentPage: () => {//http://host/{page}
-            return Router.currentRoute;
+            return Jiji.Router.currentRoute;
         },
         setUrl: (url, slideDirection = "left") => {
             console.log(url);
-            Router.lastUrl = Router.getCurrentPage();
-            Router.currentRoute = url;
+            Jiji.Router.lastUrl = Jiji.Router.getCurrentPage();
+            Jiji.Router.currentRoute = url;
             location.hash = url;
-            Router.route(slideDirection);
+            Jiji.Router.route(slideDirection);
         },
         getUrl: () => {
             return window.location.href;
         },
         getCurrentController: () => {
-            return Router.routes[Router.getCurrentPage()].controller;
+            return Jiji.Router.routes[Jiji.Router.getCurrentPage()].controller;
         },
         route: (slideDirection = "left") => {
-            const currentRoute = Router.routes[Router.getCurrentPage()];
+            const currentRoute = Jiji.Router.routes[Jiji.Router.getCurrentPage()];
     
             if (currentRoute == undefined) {
-                console.log(Router.getCurrentPage(), Router.routes);
-                Router.setUrl('/', slideDirection);
+                console.log(Jiji.Router.getCurrentPage(), Jiji.Router.routes);
+                Jiji.Router.setUrl('/', slideDirection);
                 return ;
             }
             const appElement = document.getElementsByClassName("route")[0];
@@ -243,7 +243,7 @@ const Jiji = {
             appBeforeElement.classList.remove("transite-right-to-center");
     
             appBeforeElement.innerHTML = appElement.innerHTML;
-            if (Router.firstLoad != undefined) {
+            if (Jiji.Router.firstLoad != undefined) {
                 if (slideDirection == "left") {
                     appBeforeElement.style.transform = "translate(0px, 0px);";
                     appBeforeElement.style.zIndex = "2";
@@ -261,7 +261,7 @@ const Jiji = {
             appElement.innerHTML = currentRoute.controller.innerHTML;
     
             var callbackApeare = () => {
-                if (Router.firstLoad != undefined && Jiji.device == "mobile") {
+                if (Jiji.Router.firstLoad != undefined && Jiji.device == "mobile") {
                     if (slideDirection == "left") {
                         appElement.classList.add("transite-right-to-center");
                         appBeforeElement.style.display = "inline-block";
@@ -285,12 +285,12 @@ const Jiji = {
                         }, { once: true });
                     }
                 } else {
-                    Router.firstLoad = false;
+                    Jiji.Router.firstLoad = false;
                     appBeforeElement.style.display = "none";
                 }
-                if (Router.lastUrl != undefined && Router.routes[Router.lastUrl] != undefined) { // destroy last
-                    if (Router.routes[Router.lastUrl].controller.destroy != undefined) {
-                        Router.routes[Router.lastUrl].controller.destroy(Router.routes[Router.lastUrl].controller);
+                if (Jiji.Router.lastUrl != undefined && Jiji.Router.routes[Jiji.Router.lastUrl] != undefined) { // destroy last
+                    if (Jiji.Router.routes[Jiji.Router.lastUrl].controller.destroy != undefined) {
+                        Jiji.Router.routes[Jiji.Router.lastUrl].controller.destroy(Jiji.Router.routes[Jiji.Router.lastUrl].controller);
                     }
                 }
                 return ;
@@ -302,85 +302,16 @@ const Jiji = {
         routes: {}
     }
 };
-/** export Router */
-const Router = Jiji.Router;
-/** [exports] Framework */
-document.Jiji = Jiji;
-/** [exports] Router */
-document.Router = Jiji.Router;
-////////////////////////////////////
 
-Jiji.initialize("browser", () => {
-    Router.init([
-        {
-            path: "/albums", controller: {
-                constructor: (controller, callback) => {
-                    callback();
-                },
-                destroy: (controller) => {
-                    console.log('destroyed /albums');
-                },
-                isCurrentRoute: (element) => {
-                    if (element.getAttribute('href') == Router.getCurrentPage()) {
-                        element.style.backgroundColor = "orange";
-                    } else {
-                        element.style.backgroundColor = "grey";
-                    }
-                },
-                innerHTML: /* html */`
-                    <div style="display:flex;">
-                        <div touch-link href="/" style="height: 100%;width: 100%;background-color:grey;cursor:pointer;">
-                            /
-                        </div>
-                        <div touch-link href="/albums" load="this.isCurrentRoute($this);" style="height: 100%;width: 100%;background-color:grey;cursor:pointer;">
-                            /albums
-                        </div>
-                    </div>
-                `
-            }
-        },
-        {
-            path: "/", controller: {
-                constructor: (controller, callback, detectChange) => {
-                    console.log(controller);
-                    controller.test = "salut";
-                    detectChange();
-                    callback();
-                },
-                buttonName: 'Click',
-                buttonName2: 'Click2',
-                test: "test",
-                backgroundColor: 'blue',
-                click: (element, event) => {
-                    console.log('SALUT', element, event);
-                },
-                isCurrentRoute: (element) => {
-                    if (element.getAttribute('href') == Router.getCurrentPage()) {
-                        element.style.backgroundColor = "orange";
-                    } else {
-                        element.style.backgroundColor = "grey";
-                    }
-                },
-                innerHTML: /* html */`
-                    <div style="display:flex;">
-                        <div touch-link href="/" load="this.isCurrentRoute($this);" style="height: 100%;width: 100%;background-color:grey;cursor:pointer;">
-                            /
-                        </div>
-                        <div touch-link href="/albums" style="height: 100%;width: 100%;background-color:grey;cursor:pointer;">
-                            /albums
-                        </div>
-                    </div>
-                    /
-                    <input class="form-control" bind="test" type="text" name="test" />
-                    <div if="this.test != ''" class="ninja">
-                        <p content="this.test"></p>
-                        <button type="button" class="btn btn-primary" click="this.click($this, $event);" ><display content="this.buttonName"></display></button>
-                    </div>
-                    <div else>else content</div>
-                    <button type="button" class="btn btn-primary" mouseover="$this.style.backgroundColor = this.backgroundColor;" click="this.test += 1;"  mouseleave="$this.style.backgroundColor = 'white';" ><display content="this.buttonName2"></display></button>
-                `
-            }
-        }
-    ]);
-    Router.route();
-});
+// for use with npm package
+if (typeof(module) !== 'undefined') {
+	module.exports = Jiji;
+}
+// for use with npm package
+if (typeof(document) !== 'undefined') {
+    /** [exports] Framework */
+    document.Jiji = Jiji;
+    /** [exports] Router */
+    document.Router = Jiji.Router;
+    ////////////////////////////////////
+}

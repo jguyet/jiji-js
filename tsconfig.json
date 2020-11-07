@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+        "module" : "amd",
+      "lib": [
+        "es2018"
+      ],
+      "allowJs": true,
+      //"noEmit": true, // Do not compile the JS (or TS) files in this project on build
+      "noUnusedLocals": true,
+      "noUnusedParameters" : true,
+      "skipLibCheck": false,
+      "removeComments": true,
+      "outDir": "./dist/",
+      "target": "es2018",
+      "baseUrl": ".",
+      "strict": true,
+      "sourceMap": false
+    },
+    "files": [
+      "./app.js"
+    ],
+    // "include": [
+    //   "./**/*"
+    // ],
+    "exclude": [
+      "**/*.spec.js",
+      "**/*.spec.ts"
+    ]
+}
+  
