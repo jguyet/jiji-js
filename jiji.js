@@ -30,8 +30,8 @@ const Jiji = {
             }
             x.style.display = 'none';
         });
-        document.querySelectorAll("[content]").forEach(x => {
-            const operation = x.getAttribute("content");
+        document.querySelectorAll("[in]").forEach(x => {
+            const operation = x.getAttribute("in");
             x.innerHTML = eval(`(function Main(){ try { return (${operation}); } catch (e) { return (e) } })`).call(controller);
         });
         Object.keys(controller).filter(x => controller.binder[x]).forEach(x => controller.binder[x](controller[x], false));
@@ -158,7 +158,7 @@ const Jiji = {
         });
     },
     Router: {
-        init: (routes) => {
+        initialize: (routes) => {
             var routerElement = document.getElementsByClassName("router")[0];
     
             if (routerElement == undefined) {
@@ -169,10 +169,12 @@ const Jiji = {
             document.getElementsByTagName("body")[0].style.marginLeft = "0px";
             document.getElementsByTagName("body")[0].style.marginRight = "0px";
     
-            routerElement.style.backgroundColor = "transparent";
-            routerElement.style.display = "flex";
-            routerElement.style.overflowX = "hidden";
-            routerElement.style.overflowY = "hidden";
+            if (Jiji.device == "mobile") {
+                routerElement.style.backgroundColor = "transparent";
+                routerElement.style.display = "flex";
+                routerElement.style.overflowX = "hidden";
+                routerElement.style.overflowY = "hidden";
+            }
     
             var routerSlideElement = document.createElement("div");
             var routeElement = document.createElement("div");
@@ -181,29 +183,33 @@ const Jiji = {
             routerElement.appendChild(routeElement);
             routerElement.appendChild(routerSlideElement);
     
-            routeElement.style.display = "inline-block";
-            routeElement.style.position = "absolute";
-            routeElement.style.width = "100%";
-            routeElement.style.maxWidth = "100%";
-            routeElement.style.maxHeight = "100%";
-            routeElement.style.backgroundColor = "white";
-            routeElement.style.top = "0px";
-    
-            routerSlideElement.style.display = "inline-block";
-            routerSlideElement.style.position = "absolute";
-            routerSlideElement.style.width = "100%";
-            routerSlideElement.style.maxWidth = "100%";
-            routerSlideElement.style.maxHeight = "100%";
-            routerSlideElement.style.backgroundColor = "white";
-            routerSlideElement.style.top = "0px";
+            if (Jiji.device == "mobile") {
+                routeElement.style.display = "inline-block";
+                routeElement.style.position = "absolute";
+                routeElement.style.width = "100%";
+                routeElement.style.maxWidth = "100%";
+                routeElement.style.maxHeight = "100%";
+                routeElement.style.backgroundColor = "white";
+                routeElement.style.top = "0px";
+
+                routerSlideElement.style.display = "inline-block";
+                routerSlideElement.style.position = "absolute";
+                routerSlideElement.style.width = "100%";
+                routerSlideElement.style.maxWidth = "100%";
+                routerSlideElement.style.maxHeight = "100%";
+                routerSlideElement.style.backgroundColor = "white";
+                routerSlideElement.style.top = "0px";
+            }
     
             routes.forEach((route) => Jiji.Router.routes[route.path] = route);
     
-            window.addEventListener('hashchange', () => {
-                const urlFromHash = location.hash.substr(1);
-    
-                if (Jiji.Router.currentRoute != urlFromHash) Jiji.Router.setUrl(urlFromHash);
-            });
+            if (Jiji.device == "mobile") {
+                window.addEventListener('hashchange', () => {
+                    const urlFromHash = location.hash.substr(1);
+        
+                    if (Jiji.Router.currentRoute != urlFromHash) Jiji.Router.setUrl(urlFromHash);
+                });
+            }
         },
         getCurrentPage: () => {//http://host/{page}
             return Jiji.Router.currentRoute;
@@ -212,11 +218,11 @@ const Jiji = {
             console.log(url);
             Jiji.Router.lastUrl = Jiji.Router.getCurrentPage();
             Jiji.Router.currentRoute = url;
-            location.hash = url;
+            if (Jiji.device == "mobile") location.hash = url; else window.history.pushState({},"", url);
             Jiji.Router.route(slideDirection);
         },
         getUrl: () => {
-            return window.location.href;
+            return window.location.pathname;
         },
         getCurrentController: () => {
             return Jiji.Router.routes[Jiji.Router.getCurrentPage()].controller;
@@ -226,7 +232,8 @@ const Jiji = {
     
             if (currentRoute == undefined) {
                 console.log(Jiji.Router.getCurrentPage(), Jiji.Router.routes);
-                Jiji.Router.setUrl('/', slideDirection);
+                const defaultRoute = Object.keys(Jiji.Router.routes).map(key => Jiji.Router.routes[key]).find(x => x.default === true);
+                Jiji.Router.setUrl(defaultRoute ? defaultRoute.path : '/', slideDirection);
                 return ;
             }
             const appElement = document.getElementsByClassName("route")[0];
