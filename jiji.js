@@ -38,16 +38,16 @@ const Jiji = {
     },
     prepareOperation(operation) {
         operation = operation
-            .replace("$event", "event")
-            .replace("$this", "element");
+            .replaceAll("$event", "event")
+            .replaceAll("$this", "element");
 
-        for(let result of operation.replace(";", ";\n").matchAll(/this\.(.+) (\=|\+\=|\-\=) (.+?);/gm)) {
+        for(let result of operation.replaceAll(";", ";\n").matchAll(/this\.(.+) (\=|\+\=|\-\=) (.+?);/gm)) {
             switch(result[2]) {
                 case "=":
-                    operation = operation.replace(result[0], `controller.binder['${result[1]}'](${result[3]});`);
+                    operation = operation.replaceAll(result[0], `controller.binder['${result[1]}'](${result[3]});`);
                     break ;
                 default:
-                    operation = operation.replace(result[0], `controller.binder['${result[1]}'](this['${result[1]}'] ${result[2]} ${result[3]});`);
+                    operation = operation.replaceAll(result[0], `controller.binder['${result[1]}'](this['${result[1]}'] ${result[2]} ${result[3]});`);
                     break ;
             }
         }
