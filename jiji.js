@@ -212,7 +212,7 @@ const Jiji = {
             }
         },
         getCurrentPage: () => {//http://host/{page}
-            return Jiji.Router.currentRoute;
+            return Jiji.device == "mobile" ? Jiji.Router.currentRoute : window.location.pathname;
         },
         setUrl: (url, slideDirection = "left") => {
             console.log(url);
@@ -231,7 +231,6 @@ const Jiji = {
             const currentRoute = Jiji.Router.routes[Jiji.Router.getCurrentPage()];
     
             if (currentRoute == undefined) {
-                console.log(Jiji.Router.getCurrentPage(), Jiji.Router.routes);
                 const defaultRoute = Object.keys(Jiji.Router.routes).map(key => Jiji.Router.routes[key]).find(x => x.default === true);
                 Jiji.Router.setUrl(defaultRoute ? defaultRoute.path : '/', slideDirection);
                 return ;
