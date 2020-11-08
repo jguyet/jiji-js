@@ -4,11 +4,14 @@
  */
 const Jiji = {
     device: "browser",// browser || mobile
+    globals: {},
     initialize: function(device, callback) {
         Jiji.device = device;
         document.addEventListener('deviceready', callback.bind(this), false);
         document.addEventListener('DOMContentLoaded', callback.bind(this), false);
     },
+    addGlobal(func) { Jiji.globals[func.name] = func; },
+    addGlobals(funcs) { funcs.forEach(Jiji.addGlobal); },
     customElementController: () => { return { destroy: () => {} }; },
     customElementControllerList: [],
     detectChangeVerificationFunction: () => {
@@ -39,7 +42,8 @@ const Jiji = {
     prepareOperation(operation) {
         operation = operation
             .replaceAll("$event", "event")
-            .replaceAll("$this", "element");
+            .replaceAll("$this", "element")
+            .replaceAll("$global", "global");
 
         for(let result of operation.replaceAll(";", ";\n").matchAll(/this\.(.+) (\=|\+\=|\-\=) (.+?);/gm)) {
             switch(result[2]) {
@@ -63,7 +67,7 @@ const Jiji = {
 
         document.querySelectorAll("[load]").forEach(x => {
             const operation = Jiji.prepareOperation(x.getAttribute("load"));
-            eval(`(function Main(element){ try { ${operation} } catch (e) { console.error(e); } })`).call(controller, x);
+            eval(`(function Main(element, event, global){ try { ${operation} } catch (e) { console.error(e); } })`).call(controller, x, {}, Jiji.globals);
         });
         document.querySelectorAll("[bind]").forEach(x => {
             const bindingKey = x.getAttribute("bind");
@@ -71,18 +75,16 @@ const Jiji = {
                 controller[bindingKey] = element.value;
                 if (detectChange) Jiji.detectChangeVerificationFunction();
             }
-            console.log(x.value);
-            x.addEventListener('change', () => { update(x); });
-            x.addEventListener('keyup', () => { update(x); });
-            // x.removeAttribute('bind');
+            x.onchange = () => { update(x); };
+            x.onkeyup = () => { update(x); };
             update(x);
             controller.binder[bindingKey] = (v, detectChange) => { x.value = v; update(x, detectChange); };
         });
         document.querySelectorAll("[bind-innerHTML]").forEach(x => {
             const bindingKey = x.getAttribute("bind-innerHtml");
             const update = (element) => { controller.bind[bindingKey] = element.innerHTML; }
-            x.addEventListener('change', () => { x.innerHTML = x.value; update(x); });
-            // x.removeAttribute('bind-innerHTML');
+
+            x.onchange = () => { x.innerHTML = x.value; update(x); };
             update(x);
             controller.binder[bindingKey] = (v) => { x.innerHTML = v; update(x); };
         });
@@ -91,15 +93,13 @@ const Jiji = {
         ["click", "change", "close", "dblclick", "copy", "cut", "drag", "dragend", "dragcenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusout", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseout", "mouseover", "mouseup", "scroll", "touchcancel", "touchend", "touchenter", "touchleave", "touchmove", "touchstart"]
         .forEach((eventName) => {
             document.querySelectorAll(`[${eventName}]`).forEach(x => {
-                let operation = Jiji.prepareOperation(x.getAttribute(eventName));
-                
+                const operation = Jiji.prepareOperation(x.getAttribute(eventName));
                 const callback = (e) => {
                     e.preventDefault();
-                    eval(`(function Main(event, element){ try { ${operation} } catch (e) { console.error(e); } })`).call(controller, e, x);
+                    eval(`(function Main(event, element, global){ try { ${operation} } catch (e) { console.error(e); } })`).call(controller, e, x, Jiji.globals);
                 };
                 Jiji.customElementControllerList.push(Jiji.customElementController(x));
-                x.addEventListener(eventName, callback);
-                //x.removeAttribute('Click');
+                x['on' + eventName] = callback;
             });
         })
         document.querySelectorAll("[link]").forEach(x => {
@@ -109,8 +109,7 @@ const Jiji = {
                 Jiji.Router.setUrl(href);
             };
             Jiji.customElementControllerList.push(Jiji.customElementController(x));
-            x.addEventListener('click', callback);
-            // x.removeAttribute('link');
+            x.onclick = callback;
         });
         document.querySelectorAll("[touch-link]").forEach(x => {
             const callback = (e) => {
@@ -119,8 +118,7 @@ const Jiji = {
                 Jiji.Router.setUrl(href);
             };
             Jiji.customElementControllerList.push(Jiji.customElementController(x));
-            x.addEventListener('click', callback);
-            // x.removeAttribute('touch-link');
+            x.onclick = callback;
         });
 
         document.querySelectorAll("[touch-link-load]").forEach(x => {
@@ -131,8 +129,7 @@ const Jiji = {
                 Jiji.Router.setUrl(href);
             };
             Jiji.customElementControllerList.push(Jiji.customElementController(x));
-            x.addEventListener('click', callback);
-            // x.removeAttribute('touch-link');
+            x.onclick = callback;
         });
 
         document.querySelectorAll("[touch-link-to-right]").forEach(x => {
@@ -142,8 +139,7 @@ const Jiji = {
                 Jiji.Router.setUrl(href, 'left');//left slide
             };
             Jiji.customElementControllerList.push(Jiji.customElementController(x));
-            x.addEventListener('click', callback);
-            // x.removeAttribute('touch-link-to-right');
+            x.onclick = callback;
         });
 
         document.querySelectorAll("[touch-link-to-left]").forEach(x => {
@@ -153,8 +149,7 @@ const Jiji = {
                 Jiji.Router.setUrl(href, 'right');//right slide
             };
             Jiji.customElementControllerList.push(Jiji.customElementController(x));
-            x.addEventListener('click', callback);
-            // x.removeAttribute('touch-link-to-left');
+            x.onclick = callback;
         });
     },
     Router: {
@@ -215,7 +210,6 @@ const Jiji = {
             return Jiji.device == "mobile" ? Jiji.Router.currentRoute : window.location.pathname;
         },
         setUrl: (url, slideDirection = "left") => {
-            console.log(url);
             Jiji.Router.lastUrl = Jiji.Router.getCurrentPage();
             Jiji.Router.currentRoute = url;
             if (Jiji.device == "mobile") location.hash = url; else window.history.pushState({},"", url);
@@ -293,6 +287,7 @@ const Jiji = {
                 } else {
                     Jiji.Router.firstLoad = false;
                     appBeforeElement.style.display = "none";
+                    [...appBeforeElement.childNodes].forEach(x => appBeforeElement.removeChild(x));// clean
                 }
                 if (Jiji.Router.lastUrl != undefined && Jiji.Router.routes[Jiji.Router.lastUrl] != undefined) { // destroy last
                     if (Jiji.Router.routes[Jiji.Router.lastUrl].controller.destroy != undefined) {
