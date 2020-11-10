@@ -142,6 +142,7 @@ const Jiji = {
             });
         });
         [
+            { selector: "[external-link]", f: (element, event, href) => {  Object.assign(document.createElement('a'), { target: element.getAttribute('external-link'), href: href, }).click(); } },
             { selector: "[link]", f: (element, event, href) => { Jiji.Router.setUrl(href) } },
             { selector: "[touch-link]", f: (element, event, href) => { Jiji.Router.setUrl(href) } },
             { selector: "[touch-link-load]", f: (element, event, href) => {
