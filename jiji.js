@@ -11,8 +11,6 @@ const Jiji = {
         document.addEventListener('deviceready', callback.bind(this), false);
         document.addEventListener('DOMContentLoaded', callback.bind(this), false);
     },
-    addGlobal: (func) => { Jiji.globals[func.name] = func; },
-    addGlobals: (funcs) => { funcs.forEach(Jiji.addGlobal); },
     customElementController: () => { return { destroy: () => {} }; },
     customElementControllerList: [],
     inArray: [],
@@ -319,15 +317,18 @@ const Jiji = {
     }
 };
 
-// for use with npm package
+// only before browserify with nodejs
 if (typeof(module) !== 'undefined') {
 	module.exports = Jiji;
 }
-// for use with npm package
+// [exports] Framework to GUI
 if (typeof(document) !== 'undefined') {
-    /** [exports] Framework */
     document.Jiji = Jiji;
-    /** [exports] Router */
     document.Router = Jiji.Router;
-    ////////////////////////////////////
+    document.DetectChange = Jiji.DetectChange;
+}
+if (typeof(window) !== "undefined") {
+    window.Jiji = Jiji;
+    window.Router = Jiji.Router;
+    window.DetectChange = Jiji.DetectChange;
 }
