@@ -5,6 +5,8 @@
 
 Sample front-end framework for create application easily in js
 
+see [jiji-js.io]: https://jiji-js.io
+
 [npm-image]: https://img.shields.io/npm/v/jiji-js.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/jiji-js
 [travis-image]: https://travis-ci.com/jguyet/jiji-js.svg
