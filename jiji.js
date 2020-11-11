@@ -73,13 +73,6 @@ const Jiji = {
             { regex: /setInterval\(/g, replace: "this.setInterval(" },
             { regex: /setTimeout\(/g, replace: "this.setTimeout(" }
         ].forEach(replacer => operation = operation.replace(replacer.regex, replacer.replace));
-        // [...operation.matchAll(/(?:this|controller)\.([^ =(]*)(?:[ ])?(?:(\=|\-\=|\+\=){1}(?:[ ]*)?(false|true|\".*?\"|\'.*?\'|(?:[^; =0-9]+)|(?:[0-9]+)))/gm)].forEach(result => {
-        //     if (controller.binder[result[1]] === undefined) controller.addBind(result[1]); // if binder not found create
-        //     if (result[2] == "=")
-        //         operation = operation.replaceAll(result[0], `this.binder['${result[1]}'](${result[3]})`);
-        //     else
-        //         operation = operation.replaceAll(result[0], `this.binder['${result[1]}'](this['${result[1]}'] ${result[2]} ${result[3]})`);
-        // });
         return operation;
     },
     DetectChange: {
