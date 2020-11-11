@@ -1,16 +1,20 @@
 /**
  *  Jiji Framework 2020
  *  Author : Jeremy Guyet
- *  Version : 0.0.14
+ *  Version : 0.0.15
  */
 const Jiji = {
     device: "browser",// browser || mobile
+    protocols: ["https", "http"],
     globals: {},
     verbose: false,
     initialize: function (device, callback) {
         this.device = device;
         document.addEventListener('deviceready', callback.bind(this), false);
         document.addEventListener('DOMContentLoaded', callback.bind(this), false);
+        if (Jiji.device === "browser" && location.hostname !== "localhost" && !Jiji.protocols.includes(location.protocol.replace(":", ""))) {
+            location.protocol = `${Jiji.protocols[0]}:`;
+        }
     },
     customElementController: () => { return { destroy: () => {} }; },
     customElementControllerList: [],
