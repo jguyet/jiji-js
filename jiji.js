@@ -20,7 +20,7 @@ const Jiji = {
         Jiji.debug('detectChangeVerificationFunction');
         document.querySelectorAll("[if]").forEach(x => {
             const operation = Jiji.prepareOperation(x.getAttribute("if"));
-            if (eval(`(function Main(controller, event, element, global){ try { return (${operation}); } catch (e) { return (false) } })`).call(controller, controller, {}, x, Jiji.globals)) {
+            if (eval(`(function Main(controller, event, element, globals){ try { return (${operation}); } catch (e) { return (false) } })`).call(controller, controller, {}, x, Jiji.globals)) {
                 x.style.removeProperty('display');
                 if (x.nextElementSibling && x.nextElementSibling.hasAttribute("else")) {
                     x.nextElementSibling.style.display = 'none';
@@ -35,7 +35,7 @@ const Jiji = {
             const x = document.querySelector(`[in-id=${id}]`);
             const operation = Jiji.prepareOperation(x.getAttribute("in"));
 
-            x.innerHTML = eval(`(function Main(controller, event, element, global){ try { return (${operation}); } catch (e) { return (e) } })`).call(controller, controller, {}, x, Jiji.globals);
+            x.innerHTML = eval(`(function Main(controller, event, element, globals){ try { return (${operation}); } catch (e) { return (e) } })`).call(controller, controller, {}, x, Jiji.globals);
         });
         document.querySelectorAll("[bind]").forEach(x => {
             const bindingKey = x.getAttribute("bind").replace("this.", "");
@@ -127,7 +127,7 @@ const Jiji = {
         Jiji.detectChangeVerificationFunction();// Detect Change before load
         document.querySelectorAll("[load]").forEach(x => {
             const operation = Jiji.prepareOperation(x.getAttribute("load"));
-            eval(`(function Main(controller, element, event, global){ try { ${operation} } catch (e) { console.error(e); } })`).call(controller, controller, x, {}, Jiji.globals);
+            eval(`(function Main(controller, element, event, globals){ try { ${operation} } catch (e) { console.error(e); } })`).call(controller, controller, x, {}, Jiji.globals);
         });
         ["click", "change", "close", "dblclick", "copy", "cut", "drag", "dragend", "dragcenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusout", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseout", "mouseover", "mouseup", "scroll", "touchcancel", "touchend", "touchenter", "touchleave", "touchmove", "touchstart"]
         .forEach((eventName) => {
@@ -135,7 +135,7 @@ const Jiji = {
                 const operation = Jiji.prepareOperation(x.getAttribute(eventName));
                 const callback = (e) => {
                     e.preventDefault();
-                    eval(`(function Main(controller, event, element, global){ try { ${operation} } catch (e) { console.error(e); } })`).call(controller, controller, e, x, Jiji.globals);
+                    eval(`(function Main(controller, event, element, globals){ try { ${operation} } catch (e) { console.error(e); } })`).call(controller, controller, e, x, Jiji.globals);
                 };
                 Jiji.customElementControllerList.push(Jiji.customElementController(x));
                 x['on' + eventName] = callback;
@@ -230,17 +230,28 @@ const Jiji = {
         getUrl: () => {
             return window.location.pathname;
         },
+        currentController: undefined,
         getCurrentController: () => {
-            return Jiji.Router.routes[Jiji.Router.getCurrentPage()].controller;
+            return Jiji.Router.currentController;
+        },
+        setCurrentController: (controller) => {
+            Jiji.Router.currentController = controller;
         },
         route: (slideDirection = "left") => {
-            const currentRoute = Jiji.Router.routes[Jiji.Router.getCurrentPage()];
+            const currentRouteKey = Object.keys(Jiji.Router.routes).find(key => {
+                return key === "**" ? key : Jiji.Router.getCurrentPage().match(new RegExp("^" + key.replace(/\//gm, "\\/").replace(/\*/gm, "([^\\/\\s])+") + "$")) !== null;
+            });
+            const currentRoute = Jiji.Router.routes[currentRouteKey];
     
             if (currentRoute == undefined) {
-                const defaultRoute = Object.keys(Jiji.Router.routes).map(key => Jiji.Router.routes[key]).find(x => x.default === true);
-                Jiji.Router.setUrl(defaultRoute ? defaultRoute.path : '/', slideDirection);
+                if (Jiji.Router.getCurrentPage() !== '/') Jiji.Router.setUrl('/', slideDirection); else console.error("You dont have a default controller /")
                 return ;
             }
+            if (currentRoute.redirect) {
+                Jiji.Router.setUrl(currentRoute.redirect, slideDirection);
+                return ;
+            }
+            Jiji.Router.setCurrentController(currentRoute.controller);
             const appElement = document.getElementsByClassName("route")[0];
             const appBeforeElement = document.getElementsByClassName("router-slide")[0];
     
@@ -301,7 +312,7 @@ const Jiji = {
                     appBeforeElement.style.display = "none";
                     appBeforeElement.innerHTML = "";
                 }
-                if (Jiji.Router.lastUrl != undefined && Jiji.Router.routes[Jiji.Router.lastUrl] != undefined) { // destroy last
+                if (Jiji.Router.lastUrl !== undefined && Jiji.Router.routes[Jiji.Router.lastUrl] !== undefined && Jiji.Router.routes[Jiji.Router.lastUrl].controller !== undefined) { // destroy last
                     Jiji.Router.routes[Jiji.Router.lastUrl].controller.intervals.forEach(clearInterval);
                     Jiji.Router.routes[Jiji.Router.lastUrl].controller.timeouts.forEach(clearInterval);
                     if (Jiji.Router.routes[Jiji.Router.lastUrl].controller.destroy != undefined) {
