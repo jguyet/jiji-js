@@ -8,8 +8,7 @@ const Jiji = {
     protocols: ["https", "http"],
     globals: {},
     verbose: false,
-    initialize: function (device, callback) {
-        this.device = device;
+    initialize: function (callback) {
         document.addEventListener('deviceready', callback.bind(this), false);
         document.addEventListener('DOMContentLoaded', callback.bind(this), false);
         if (Jiji.device === "browser" && location.hostname !== "localhost" && !Jiji.protocols.includes(location.protocol.replace(":", ""))) {
