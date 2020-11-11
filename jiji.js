@@ -1,6 +1,7 @@
 /**
  *  Jiji Framework 2020
  *  Author : Jeremy Guyet
+ *  Version : 0.0.14
  */
 const Jiji = {
     device: "browser",// browser || mobile
