@@ -215,6 +215,10 @@ const Jiji = {
                 });
             }
         },
+        addRoutes: (routes = []) => { routes.forEach((route) => Jiji.Router.routes[route.path] = route); },
+        addRoute: (route) => Jiji.Router.addRoutes([route]),
+        removeRoutes: (routes = []) => { routes.forEach((route) => delete Jiji.Router.routes[route]); },
+        removeRoute: (route) => { Jiji.Router.removeRoutes([route]); },
         getCurrentPage: () => {//http://host/{page}
             return Jiji.device == "mobile" ? Jiji.Router.currentRoute : window.location.pathname;
         },
