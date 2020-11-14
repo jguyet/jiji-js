@@ -1,7 +1,7 @@
 /**
  *  Jiji Framework 2020
  *  Author : Jeremy Guyet
- *  Version : 0.0.17
+ *  Version : 0.0.18
  */
 const Jiji = {
     device: "browser",// browser || mobile
@@ -240,10 +240,13 @@ const Jiji = {
         },
         searchController: (routes, path, slideDirection) => {
             const currentRouteKey = Object.keys(routes).find(key => {
-                if (routes[key].index && path.match(new RegExp("^" + `${key}/*`.replace(/\//gm, "\\/").replace(/\*/gm, "([^\\/\\s])+") + "$")) !== null) {
+                const pathWithoutLastSlash = path.replace(/\/$/g, "");
+                const keyWithoutLastSlash = key.replace(/\/$/g, "");
+
+                if (routes[key].index && pathWithoutLastSlash.match(new RegExp("^" + `${keyWithoutLastSlash}/*`.replace(/\//gm, "\\/").replace(/\*/gm, "([^\\/\\s])+") + "$")) !== null) {
                     return true;
                 }
-                return key === "**" ? key : path.match(new RegExp("^" + key.replace(/\//gm, "\\/").replace(/\*/gm, "([^\\/\\s])+") + "$")) !== null;
+                return key === "**" ? key : pathWithoutLastSlash.match(new RegExp("^" + keyWithoutLastSlash.replace(/\//gm, "\\/").replace(/\*/gm, "([^\\/\\s])+") + "$")) !== null;
             });
             const currentRoute = routes[currentRouteKey];
     
