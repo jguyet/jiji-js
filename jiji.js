@@ -334,6 +334,7 @@ const Jiji = {
                         Jiji.Router.routes[Jiji.Router.lastUrl].controller.destroy.call(Jiji.Router.routes[Jiji.Router.lastUrl].controller);
                     }
                 }
+                window.scrollTo(0,0);
                 Jiji.mount();
                 if (currentRoute.controller.mounted) currentRoute.controller.mounted.call(currentRoute.controller);
                 return ;
