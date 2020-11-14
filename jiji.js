@@ -238,18 +238,32 @@ const Jiji = {
         setCurrentController: (controller) => {
             Jiji.Router.currentController = controller;
         },
-        route: (slideDirection = "left") => {
-            const currentRouteKey = Object.keys(Jiji.Router.routes).find(key => {
-                return key === "**" ? key : Jiji.Router.getCurrentPage().match(new RegExp("^" + key.replace(/\//gm, "\\/").replace(/\*/gm, "([^\\/\\s])+") + "$")) !== null;
+        searchController: (routes, path, slideDirection) => {
+            const currentRouteKey = Object.keys(routes).find(key => {
+                if (routes[key].index && path.match(new RegExp("^" + `${key}/*`.replace(/\//gm, "\\/").replace(/\*/gm, "([^\\/\\s])+") + "$")) !== null) {
+                    return true;
+                }
+                return key === "**" ? key : path.match(new RegExp("^" + key.replace(/\//gm, "\\/").replace(/\*/gm, "([^\\/\\s])+") + "$")) !== null;
             });
-            const currentRoute = Jiji.Router.routes[currentRouteKey];
+            const currentRoute = routes[currentRouteKey];
     
             if (currentRoute == undefined) {
-                if (Jiji.Router.getCurrentPage() !== '/') Jiji.Router.setUrl('/', slideDirection); else console.error("You dont have a default controller /")
-                return ;
+                if (path !== '/') Jiji.Router.setUrl('/', slideDirection); else console.error("You dont have a default controller /")
+                return undefined;
             }
             if (currentRoute.redirect) {
                 Jiji.Router.setUrl(currentRoute.redirect, slideDirection);
+                return undefined;
+            }
+            if (currentRoute.index) {
+                return Jiji.Router.searchController(currentRoute.index().reduce((a, route) => { a[currentRoute.path + route.path] = route; return a; }, {}), path, slideDirection);
+            }
+            return currentRoute;
+        },
+        route: (slideDirection = "left") => {
+            const currentRoute = Jiji.Router.searchController(Jiji.Router.routes, Jiji.Router.getCurrentPage(), slideDirection);
+
+            if (currentRoute === undefined) {
                 return ;
             }
             Jiji.Router.setCurrentController(currentRoute.controller);
