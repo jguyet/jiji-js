@@ -1,3 +1,4 @@
+"use strict";
 /**
  *  Jiji Framework 2020
  *  Author : Jeremy Guyet
@@ -206,13 +207,11 @@ const Jiji = {
             }
     
             routes.forEach((route) => Jiji.Router.routes[route.path] = route);
-    
+            const reloadUrl = (newUrl) => { Jiji.Router.setUrl(newUrl); history.pushState({}, "", Jiji.Router.lastUrl); };
             if (Jiji.device == "mobile") {
-                window.addEventListener('hashchange', () => {
-                    const urlFromHash = location.hash.substr(1);
-        
-                    if (Jiji.Router.currentRoute != urlFromHash) Jiji.Router.setUrl(urlFromHash);
-                });
+                window.addEventListener('hashchange', () => reloadUrl(location.hash.substr(1)));
+            } else {
+                window.addEventListener('popstate', () => reloadUrl(location.pathname));
             }
         },
         addRoutes: (routes = []) => { routes.forEach((route) => Jiji.Router.routes[route.path] = route); },
@@ -264,6 +263,7 @@ const Jiji = {
             return currentRoute;
         },
         route: (slideDirection = "left") => {
+            const lastController = Jiji.Router.currentController;
             const currentRoute = Jiji.Router.searchController(Jiji.Router.routes, Jiji.Router.getCurrentPage(), slideDirection);
 
             if (currentRoute === undefined) {
@@ -330,11 +330,11 @@ const Jiji = {
                     appBeforeElement.style.display = "none";
                     appBeforeElement.innerHTML = "";
                 }
-                if (Jiji.Router.lastUrl !== undefined && Jiji.Router.routes[Jiji.Router.lastUrl] !== undefined && Jiji.Router.routes[Jiji.Router.lastUrl].controller !== undefined) { // destroy last
-                    Jiji.Router.routes[Jiji.Router.lastUrl].controller.intervals.forEach(clearInterval);
-                    Jiji.Router.routes[Jiji.Router.lastUrl].controller.timeouts.forEach(clearInterval);
-                    if (Jiji.Router.routes[Jiji.Router.lastUrl].controller.destroy != undefined) {
-                        Jiji.Router.routes[Jiji.Router.lastUrl].controller.destroy.call(Jiji.Router.routes[Jiji.Router.lastUrl].controller);
+                if (lastController !== undefined) { // destroy last
+                    lastController.intervals.forEach(clearInterval);
+                    lastController.timeouts.forEach(clearInterval);
+                    if (lastController.destroy != undefined) {
+                        lastController.destroy.call(lastController);
                     }
                 }
                 window.scrollTo(0,0);
