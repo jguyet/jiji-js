@@ -26,7 +26,7 @@ const Jiji = {
         Jiji.debug('detectChangeVerificationFunction');
         document.querySelectorAll("[if]").forEach(x => {
             const operation = Jiji.prepareOperation(x.getAttribute("if"));
-            if (eval(`(function Main(controller, event, element, globals){ try { return (${operation}); } catch (e) { return (false) } })`).call(controller, controller, {}, x, Jiji.globals)) {
+            if (Jiji.quarantinedEval(`(function Main(controller, event, element, globals){ try { return (${operation}); } catch (e) { return (false) } })`).call(controller, controller, {}, x, Jiji.globals)) {
                 x.style.removeProperty('display');
                 if (x.nextElementSibling && x.nextElementSibling.hasAttribute("else")) {
                     x.nextElementSibling.style.display = 'none';
@@ -41,7 +41,7 @@ const Jiji = {
             const x = document.querySelector(`[in-id=${id}]`);
             const operation = Jiji.prepareOperation(x.getAttribute("in"));
 
-            x.innerHTML = eval(`(function Main(controller, event, element, globals){ try { return (${operation}); } catch (e) { return (e) } })`).call(controller, controller, {}, x, Jiji.globals);
+            x.innerHTML = Jiji.quarantinedEval(`(function Main(controller, event, element, globals){ try { return (${operation}); } catch (e) { return (e) } })`).call(controller, controller, {}, x, Jiji.globals);
         });
         document.querySelectorAll("[bind]").forEach(x => {
             const bindingKey = x.getAttribute("bind").replace("this.", "");
@@ -67,6 +67,26 @@ const Jiji = {
             Jiji.detectChangeVerificationFunction();
         }
     },
+    /* SECURE EVAL IMPLICIT XSS PROTECTION */
+    quarantinedEval: (new Function(`const empty=(function(){
+        let forbidden=Object.create(null);
+        [
+            typeof(window) == 'undefined' ? undefined : window,
+            this,
+            typeof(self) == 'undefined' ? undefined : self,
+        ].forEach(function(obj){
+            if (obj) {
+                Object.getOwnPropertyNames(obj).forEach(function(key){ forbidden[key]=null; });
+                Object.keys(obj).forEach(function(key){ forbidden[key]=null; });
+            }
+        });
+        ["eval", "this", "Object"].forEach(function(key){ delete forbidden[key]; });
+        Object.freeze(forbidden);
+        return forbidden;
+    })();
+    return function(strEval) {
+        return (function(empty,strEval){ with(empty){ return eval(strEval); } }).call(empty,empty,strEval);
+    };`))(),
     prepareOperation(operation) {
         [
             { regex: /\$event/g, replace: "event" },
@@ -126,7 +146,7 @@ const Jiji = {
         Jiji.detectChangeVerificationFunction();// Detect Change before load
         document.querySelectorAll("[load]").forEach(x => {
             const operation = Jiji.prepareOperation(x.getAttribute("load"));
-            eval(`(function Main(controller, element, event, globals){ try { ${operation} } catch (e) { console.error(e); } })`).call(controller, controller, x, {}, Jiji.globals);
+            Jiji.quarantinedEval(`(function Main(controller, element, event, globals){ try { ${operation} } catch (e) { console.error(e); } })`).call(controller, controller, x, {}, Jiji.globals);
         });
         ["click", "change", "close", "dblclick", "copy", "cut", "drag", "dragend", "dragcenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusout", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseout", "mouseover", "mouseup", "scroll", "touchcancel", "touchend", "touchenter", "touchleave", "touchmove", "touchstart"]
         .forEach((eventName) => {
@@ -134,7 +154,7 @@ const Jiji = {
                 const operation = Jiji.prepareOperation(x.getAttribute(eventName));
                 const callback = (e) => {
                     e.preventDefault();
-                    eval(`(function Main(controller, event, element, globals){ try { ${operation} } catch (e) { console.error(e); } })`).call(controller, controller, e, x, Jiji.globals);
+                    Jiji.quarantinedEval(`(function Main(controller, event, element, globals){ try { ${operation} } catch (e) { console.error(e); } })`).call(controller, controller, e, x, Jiji.globals);
                 };
                 Jiji.customElementControllerList.push(Jiji.customElementController(x));
                 x['on' + eventName] = callback;

@@ -13,8 +13,11 @@
   },
   "author": "Guyet Jeremy <jguyet@linepicplus.com> (https://github.io/jguyet)",
   "scripts": {
+    "test": "./node_modules/mocha/bin/mocha"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "mocha": "^8.2.1"
+  },
   "dependencies": {},
   "description": "Tiny Framework front-end in javascript.",
   "main": "jiji.js",
