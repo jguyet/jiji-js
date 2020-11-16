@@ -2,19 +2,20 @@
 /**
  *  Jiji Framework 2020
  *  Author : Jeremy Guyet
- *  Version : 0.0.19
+ *  Version : 0.0.20
  */
 const Jiji = {
     device: "browser",// browser || mobile
-    protocols: ["https", "http"],
+    protocols: ["https", "http", "file"],
     globals: {},
-    verbose: false,
+    verbose: true,
     initialize: function (callback) {
         document.addEventListener('deviceready', callback.bind(this), false);
         document.addEventListener('DOMContentLoaded', callback.bind(this), false);
         if (Jiji.device === "browser" && location.hostname !== "localhost" && !Jiji.protocols.includes(location.protocol.replace(":", ""))) {
             location.protocol = `${Jiji.protocols[0]}:`;
         }
+        Jiji.protocol = location.protocol.replace(":", "");
     },
     customElementController: () => { return { destroy: () => {} }; },
     customElementControllerList: [],
@@ -208,9 +209,7 @@ const Jiji = {
     
             routes.forEach((route) => Jiji.Router.routes[route.path] = route);
             const reloadUrl = (newUrl) => { Jiji.Router.setUrl(newUrl); history.pushState({}, "", Jiji.Router.lastUrl); };
-            if (Jiji.device == "mobile") {
-                window.addEventListener('hashchange', () => reloadUrl(location.hash.substr(1)));
-            } else {
+            if (Jiji.device == "browser" && Jiji.protocol != "file") {
                 window.addEventListener('popstate', () => reloadUrl(location.pathname));
             }
         },
@@ -219,12 +218,12 @@ const Jiji = {
         removeRoutes: (routes = []) => { routes.forEach((route) => delete Jiji.Router.routes[route]); },
         removeRoute: (route) => { Jiji.Router.removeRoutes([route]); },
         getCurrentPage: () => {//http://host/{page}
-            return Jiji.device == "mobile" ? Jiji.Router.currentRoute : window.location.pathname;
+            return Jiji.device == "mobile" || Jiji.protocol == "file" ? (Jiji.Router.currentRoute ? Jiji.Router.currentRoute : "/") : window.location.pathname;
         },
         setUrl: (url, slideDirection = "left") => {
             Jiji.Router.lastUrl = Jiji.Router.getCurrentPage();
             Jiji.Router.currentRoute = url;
-            if (Jiji.device == "mobile") location.hash = url; else window.history.pushState({},"", url);
+            if (Jiji.device == "browser" && Jiji.protocol != "file") window.history.pushState({},"", url);
             Jiji.Router.route(slideDirection);
         },
         getUrl: () => {
@@ -258,7 +257,7 @@ const Jiji = {
                 return undefined;
             }
             if (currentRoute.index) {
-                return Jiji.Router.searchController(currentRoute.index().reduce((a, route) => { a[currentRoute.path + route.path] = route; return a; }, {}), path, slideDirection);
+                return Jiji.Router.searchController(currentRoute.index().reduce((a, route) => { a[currentRoute.path + route.path] = { ... route, path: currentRoute.path + route.path }; return a; }, {}), path, slideDirection);
             }
             return currentRoute;
         },
@@ -269,6 +268,7 @@ const Jiji = {
             if (currentRoute === undefined) {
                 return ;
             }
+            Jiji.debug(`new location.pathname = ${currentRoute.path}`);
             Jiji.Router.setCurrentController(currentRoute.controller);
             const appElement = document.getElementsByClassName("route")[0];
             const appBeforeElement = document.getElementsByClassName("router-slide")[0];
