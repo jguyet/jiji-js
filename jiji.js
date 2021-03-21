@@ -26,7 +26,7 @@ const Jiji = {
         Jiji.debug('detectChangeVerificationFunction');
         document.querySelectorAll("[if]").forEach(x => {
             const operation = Jiji.prepareOperation(x.getAttribute("if"));
-            if (Jiji.quarantinedEval(`(function Main(controller, event, element, globals){ try { return (${operation}); } catch (e) { return (false) } })`).call(controller, controller, {}, x, Jiji.globals)) {
+            if (eval(`(function Main(controller, event, element, globals){ try { return (${operation}); } catch (e) { return (false) } })`).call(controller, controller, {}, x, Jiji.globals)) {
                 x.style.removeProperty('display');
                 if (x.nextElementSibling && x.nextElementSibling.hasAttribute("else")) {
                     x.nextElementSibling.style.display = 'none';
@@ -41,7 +41,7 @@ const Jiji = {
             const x = document.querySelector(`[in-id=${id}]`);
             const operation = Jiji.prepareOperation(x.getAttribute("in"));
 
-            x.innerHTML = Jiji.quarantinedEval(`(function Main(controller, event, element, globals){ try { return (${operation}); } catch (e) { return (e) } })`).call(controller, controller, {}, x, Jiji.globals);
+            x.innerHTML = eval(`(function Main(controller, event, element, globals){ try { return (${operation}); } catch (e) { return (e) } })`).call(controller, controller, {}, x, Jiji.globals);
         });
         document.querySelectorAll("[bind]").forEach(x => {
             const bindingKey = x.getAttribute("bind").replace("this.", "");
@@ -67,26 +67,6 @@ const Jiji = {
             Jiji.detectChangeVerificationFunction();
         }
     },
-    /* SECURE EVAL IMPLICIT XSS PROTECTION */
-    quarantinedEval: (new Function(`const empty=(function(){
-        let forbidden=Object.create(null);
-        [
-            typeof(window) == 'undefined' ? undefined : window,
-            this,
-            typeof(self) == 'undefined' ? undefined : self,
-        ].forEach(function(obj){
-            if (obj) {
-                Object.getOwnPropertyNames(obj).forEach(function(key){ forbidden[key]=null; });
-                Object.keys(obj).forEach(function(key){ forbidden[key]=null; });
-            }
-        });
-        ["eval", "this", "Object"].forEach(function(key){ delete forbidden[key]; });
-        Object.freeze(forbidden);
-        return forbidden;
-    })();
-    return function(strEval) {
-        return (function(empty,strEval){ with(empty){ return eval(strEval); } }).call(empty,empty,strEval);
-    };`))(),
     prepareOperation(operation) {
         [
             { regex: /\$event/g, replace: "event" },
@@ -146,7 +126,7 @@ const Jiji = {
         Jiji.detectChangeVerificationFunction();// Detect Change before load
         document.querySelectorAll("[load]").forEach(x => {
             const operation = Jiji.prepareOperation(x.getAttribute("load"));
-            Jiji.quarantinedEval(`(function Main(controller, element, event, globals){ try { ${operation} } catch (e) { console.error(e); } })`).call(controller, controller, x, {}, Jiji.globals);
+            eval(`(function Main(controller, element, event, globals){ try { ${operation} } catch (e) { console.error(e); } })`).call(controller, controller, x, {}, Jiji.globals);
         });
         ["click", "change", "close", "dblclick", "copy", "cut", "drag", "dragend", "dragcenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusout", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseout", "mouseover", "mouseup", "scroll", "touchcancel", "touchend", "touchenter", "touchleave", "touchmove", "touchstart"]
         .forEach((eventName) => {
@@ -154,7 +134,7 @@ const Jiji = {
                 const operation = Jiji.prepareOperation(x.getAttribute(eventName));
                 const callback = (e) => {
                     e.preventDefault();
-                    Jiji.quarantinedEval(`(function Main(controller, event, element, globals){ try { ${operation} } catch (e) { console.error(e); } })`).call(controller, controller, e, x, Jiji.globals);
+                    eval(`(function Main(controller, event, element, globals){ try { ${operation} } catch (e) { console.error(e); } })`).call(controller, controller, e, x, Jiji.globals);
                 };
                 Jiji.customElementControllerList.push(Jiji.customElementController(x));
                 x['on' + eventName] = callback;
@@ -212,19 +192,27 @@ const Jiji = {
             if (Jiji.device == "mobile") {
                 routeElement.style.display = "inline-block";
                 routeElement.style.position = "absolute";
-                routeElement.style.width = "100%";
-                routeElement.style.maxWidth = "100%";
-                routeElement.style.maxHeight = "100%";
+                routeElement.style.width = "100vw";
+                routeElement.style.height = "100vh";
+                routeElement.style.maxWidth = "100vw";
+                routeElement.style.maxHeight = "100vh";
+                routeElement.style.minWidth = "100vw";
+                routeElement.style.minHeight = "100vh";
                 routeElement.style.backgroundColor = "white";
                 routeElement.style.top = "0px";
+                routeElement.style.overflow = "hidden";
 
-                routerSlideElement.style.display = "inline-block";
+                routerSlideElement.style.display = "none";//slide page hidden
                 routerSlideElement.style.position = "absolute";
-                routerSlideElement.style.width = "100%";
-                routerSlideElement.style.maxWidth = "100%";
-                routerSlideElement.style.maxHeight = "100%";
+                routerSlideElement.style.width = "100vw";
+                routerSlideElement.style.height = "100vh";
+                routerSlideElement.style.maxWidth = "100vw";
+                routerSlideElement.style.maxHeight = "100vh";
+                routerSlideElement.style.minWidth = "100vw";
+                routerSlideElement.style.minHeight = "100vh";
                 routerSlideElement.style.backgroundColor = "white";
                 routerSlideElement.style.top = "0px";
+                routerSlideElement.style.overflow = "hidden";
             }
     
             routes.forEach((route) => Jiji.Router.routes[route.path] = route);
@@ -290,63 +278,72 @@ const Jiji = {
             }
             Jiji.debug(`new location.pathname = ${currentRoute.path}`);
             Jiji.Router.setCurrentController(currentRoute.controller);
-            const appElement = document.getElementsByClassName("route")[0];
-            const appBeforeElement = document.getElementsByClassName("router-slide")[0];
+            let appElement = document.getElementsByClassName("route")[0];
+            let appBeforeElement = document.getElementsByClassName("router-slide")[0];
     
-            appElement.classList.remove("transite-left-to-center");
-            appElement.classList.remove("transite-center-to-left");
-            appElement.classList.remove("transite-center-to-right");
-            appElement.classList.remove("transite-right-to-center");
-    
-            appBeforeElement.classList.remove("transite-left-to-center");
-            appBeforeElement.classList.remove("transite-center-to-left");
-            appBeforeElement.classList.remove("transite-center-to-right");
-            appBeforeElement.classList.remove("transite-right-to-center");
-    
-            appBeforeElement.innerHTML = appElement.innerHTML;
-            if (Jiji.Router.firstLoad != undefined) {
+            if (Jiji.Router.firstLoad != undefined) {// place two pages for prepare starting animation
                 if (slideDirection == "left") {
                     appBeforeElement.style.transform = "translate(0px, 0px);";
-                    appBeforeElement.style.zIndex = "2";
                     appElement.style.transform = "translate(100%, 0px);";
+                    appBeforeElement.style.zIndex = "2";
                     appElement.style.zIndex = "1";
-                    appBeforeElement.style.display = "inline-block";
                 } else if (slideDirection == "right") {
                     appBeforeElement.style.transform = "translate(0px, 0px);";
                     appBeforeElement.style.zIndex = "2";
                     appElement.style.transform = "translate(-100%, 0px);";
                     appElement.style.zIndex = "1";
-                    appBeforeElement.style.display = "inline-block";
                 }
             }
+
+            // changes classes of two pages
+            appElement.classList.remove('route');
+            appElement.classList.add('router-slide');
+            appBeforeElement.classList.remove('router-slide');
+            appBeforeElement.classList.add('route');
+            let tmpElement = appBeforeElement;
+            appBeforeElement = appElement;
+            appElement = tmpElement;
+
             appElement.innerHTML = currentRoute.controller.innerHTML.replace(/\{\{/g, '<in>').replace(/\}\}/g, '</in>');
-    
+
             var callbackApeare = () => {
                 if (Jiji.Router.firstLoad != undefined && Jiji.device == "mobile") {
+                    const removeAllTransiteClasses = function (element) {
+                        const transiteClasses = ["transite-left-to-center", "transite-center-to-left", "transite-center-to-right", "transite-right-to-center"];
+                        transiteClasses.forEach(c => element.classList.remove(c));
+                    }
                     if (slideDirection == "left") {
-                        appElement.classList.add("transite-right-to-center");
+                        //display two pages and start animation
+                        appElement.style.display = "inline-block";
                         appBeforeElement.style.display = "inline-block";
+                        appElement.classList.add("transite-right-to-center");
                         appBeforeElement.classList.add("transite-center-to-left");
-                        appBeforeElement.addEventListener("animationend", () => {
+                        appElement.addEventListener("animationend", () => {
                             appBeforeElement.innerHTML = "";
                             appBeforeElement.style.display = "none";
                             appBeforeElement.style.zIndex = "1";
                             appElement.style.zIndex = "2";
+                            removeAllTransiteClasses(appElement);
+                            removeAllTransiteClasses(appBeforeElement);
                         }, { once: true });
                     } else if (slideDirection == "right") {
-                        appElement.classList.add("transite-left-to-center");
+                        //display two pages and start animation
+                        appElement.style.display = "inline-block";
                         appBeforeElement.style.display = "inline-block";
+                        appElement.classList.add("transite-left-to-center");
                         appBeforeElement.classList.add("transite-center-to-right");
-                        
                         appBeforeElement.addEventListener("animationend", () => {
                             appBeforeElement.innerHTML = "";
                             appBeforeElement.style.display = "none";
                             appBeforeElement.style.zIndex = "1";
                             appElement.style.zIndex = "2";
+                            removeAllTransiteClasses(appElement);
+                            removeAllTransiteClasses(appBeforeElement);
                         }, { once: true });
                     }
                 } else {
                     Jiji.Router.firstLoad = false;
+                    appElement.style.display = "inline-block";
                     appBeforeElement.style.display = "none";
                     appBeforeElement.innerHTML = "";
                 }
