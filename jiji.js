@@ -1,8 +1,8 @@
 "use strict";
 /**
- *  Jiji Framework 2020
+ *  Jiji Framework 2021
  *  Author : Jeremy Guyet
- *  Version : 0.0.23
+ *  Version : 0.0.24
  */
 const Jiji = {
     device: "browser",// browser || mobile
