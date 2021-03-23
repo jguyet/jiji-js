@@ -159,7 +159,7 @@ const Jiji = {
                     event.f(x, e, href);
                 };
                 Jiji.customElementControllerList.push(Jiji.customElementController(x));
-                x.onclick = callback;
+                x[x.attributes['jiji-use-event'] === undefined ? 'onclick' : x.attributes['jiji-use-event'].value] = callback;
             });
         });
     },
