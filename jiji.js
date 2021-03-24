@@ -2,7 +2,7 @@
 /**
  *  Jiji Framework 2021
  *  Author : Jeremy Guyet
- *  Version : 0.0.24
+ *  Version : 0.0.25
  */
 const Jiji = {
     device: "browser",// browser || mobile
@@ -10,8 +10,7 @@ const Jiji = {
     globals: {},
     verbose: true,
     initialize: function (callback) {
-        document.addEventListener('deviceready', callback.bind(this), false);
-        document.addEventListener('DOMContentLoaded', callback.bind(this), false);
+        document.addEventListener(Jiji.device == "mobile" ? 'deviceready' : 'DOMContentLoaded', callback.bind(this), false);
         if (Jiji.device === "browser" && location.hostname !== "localhost" && !Jiji.protocols.includes(location.protocol.replace(":", ""))) {
             location.protocol = `${Jiji.protocols[0]}:`;
         }
