@@ -23,7 +23,7 @@ const Jiji = {
     detectChangeVerificationFunction: (withoutController = false) => {
         const controller = Jiji.Router.getCurrentController();
         Jiji.debug('detectChangeVerificationFunction');
-        document.querySelectorAll("[if]").forEach(x => {
+        controller._innerHTMLElement.querySelectorAll("[if]").forEach(x => {
             const operation = Jiji.prepareOperation(x.getAttribute("if"));
             if (eval(`(function Main(controller, event, element, globals){ try { return (${operation}); } catch (e) { return (false) } })`).call(controller, controller, {}, x, Jiji.globals)) {
                 x.style.removeProperty('display');
@@ -37,12 +37,12 @@ const Jiji = {
             x.style.display = 'none';
         });
         Jiji.inArray.forEach(id => {
-            const x = document.querySelector(`[in-id=${id}]`);
+            const x = controller._innerHTMLElement.querySelector(`[in-id=${id}]`);
             const operation = Jiji.prepareOperation(x.getAttribute("in"));
 
             x.innerHTML = eval(`(function Main(controller, event, element, globals){ try { return (${operation}); } catch (e) { return (e) } })`).call(controller, controller, {}, x, Jiji.globals);
         });
-        document.querySelectorAll("[bind]").forEach(x => {
+        controller._innerHTMLElement.querySelectorAll("[bind]").forEach(x => {
             const bindingKey = x.getAttribute("bind").replace("this.", "");
             if (document.activeElement !== x) { // apply if not focused
                 x.value = controller[bindingKey];
@@ -57,7 +57,7 @@ const Jiji = {
         }
         Jiji.Router.mapCurrentController = JSON.stringify(Object.keys(controller)
             .filter(key => !["function"].includes(typeof controller[key]))
-            .filter(key => !["bind", "binder", "intervals", "timeouts", "innerHTML"].includes(key))
+            .filter(key => !["bind", "binder", "_intervals", "_timeouts", "innerHTML", "_innerHTMLElement"].includes(key))
             .reduce((a, b) => { a[b] = controller[b]; return a; }, {}));
     },
     detectChangeControllerVerification: () => {
@@ -94,28 +94,29 @@ const Jiji = {
         },
         detect: () => Jiji.detectChangeVerificationFunction
     },
-    mount: () => {
+    mount: (controllerElement) => {
         const controller = Jiji.Router.getCurrentController();
 
-        controller.intervals = [];
-        controller.timeouts = [];
-        controller.setInterval = (a, b) => { const id = setInterval(a, b); controller.intervals.push(id); return id; };
-        controller.setTimeout = (a, b) => { const id = setTimeout(a, b); controller.timeouts.push(id); return id; };
+        controller._innerHTMLElement = controllerElement;
+        controller._intervals = [];
+        controller._timeouts = [];
+        controller.setInterval = (a, b) => { const id = setInterval(a, b); controller._intervals.push(id); return id; };
+        controller.setTimeout = (a, b) => { const id = setTimeout(a, b); controller._timeouts.push(id); return id; };
         Jiji.inArray = [];
         Jiji.customElementControllerList.forEach(x => { x.destroy(); });
         Jiji.customElementControllerList = [];
 
-        document.querySelectorAll("in").forEach(x => {
+        controller._innerHTMLElement.querySelectorAll("in").forEach(x => {
             if (x.hasAttribute('in')) return ;
             x.setAttribute("in", x.innerText);
         });
-        document.querySelectorAll("[in]").forEach(x => {
+        controller._innerHTMLElement.querySelectorAll("[in]").forEach(x => {
             const id = "in" + Jiji.inArray.length;
 
             x.setAttribute("in-id", id);
             Jiji.inArray.push(id);
         });
-        document.querySelectorAll("[bind]").forEach(x => {
+        controller._innerHTMLElement.querySelectorAll("[bind]").forEach(x => {
             const bindingKey = x.getAttribute("bind").replace("this.", "");
             controller[bindingKey] = x.value;
             x.onchange = () => { controller[bindingKey] = x.value; };
@@ -123,13 +124,13 @@ const Jiji = {
         });
         Jiji.DetectChange.applyDetectChangeInterval();// Apply Detect Change Interval before load
         Jiji.detectChangeVerificationFunction();// Detect Change before load
-        document.querySelectorAll("[load]").forEach(x => {
+        controller._innerHTMLElement.querySelectorAll("[load]").forEach(x => {
             const operation = Jiji.prepareOperation(x.getAttribute("load"));
             eval(`(function Main(controller, element, event, globals){ try { ${operation} } catch (e) { console.error(e); } })`).call(controller, controller, x, {}, Jiji.globals);
         });
         ["click", "change", "close", "dblclick", "copy", "cut", "drag", "dragend", "dragcenter", "dragleave", "dragover", "dragstart", "drop", "focus", "focusout", "keydown", "keypress", "keyup", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseout", "mouseover", "mouseup", "scroll", "touchcancel", "touchend", "touchenter", "touchleave", "touchmove", "touchstart"]
         .forEach((eventName) => {
-            document.querySelectorAll(`[${eventName}]`).forEach(x => {
+            controller._innerHTMLElement.querySelectorAll(`[${eventName}]`).forEach(x => {
                 const operation = Jiji.prepareOperation(x.getAttribute(eventName));
                 const callback = (e) => {
                     e.preventDefault();
@@ -140,7 +141,7 @@ const Jiji = {
             });
         });
         [
-            { selector: "[external-link]", f: (element, event, href) => {  Object.assign(document.createElement('a'), { target: element.getAttribute('external-link'), href: href, }).click(); } },
+            { selector: "[external-link]", f: (element, event, href) => {  Object.assign(controller._innerHTMLElement.createElement('a'), { target: element.getAttribute('external-link'), href: href, }).click(); } },
             { selector: "[link]", f: (element, event, href) => { Jiji.Router.setUrl(href) } },
             { selector: "[touch-link]", f: (element, event, href) => { Jiji.Router.setUrl(href) } },
             { selector: "[touch-link-load]", f: (element, event, href) => {
@@ -151,7 +152,7 @@ const Jiji = {
             { selector: "[touch-link-to-right]", f: (element, event, href) => { Jiji.Router.setUrl(href, 'left');/*left slide*/ } },
             { selector: "[touch-link-to-left]", f: (element, event, href) => { Jiji.Router.setUrl(href, 'right');/*right slide*/ } },
         ].forEach(event => {
-            document.querySelectorAll(event.selector).forEach(x => {
+            controller._innerHTMLElement.querySelectorAll(event.selector).forEach(x => {
                 const callback = (e) => {
                     e.preventDefault();
                     var href = x.attributes.href.value;
@@ -347,14 +348,14 @@ const Jiji = {
                     appBeforeElement.innerHTML = "";
                 }
                 if (lastController !== undefined) { // destroy last
-                    lastController.intervals.forEach(clearInterval);
-                    lastController.timeouts.forEach(clearInterval);
+                    lastController._intervals.forEach(clearInterval);
+                    lastController._timeouts.forEach(clearInterval);
                     if (lastController.destroy != undefined) {
                         lastController.destroy.call(lastController);
                     }
                 }
                 window.scrollTo(0,0);
-                Jiji.mount();
+                Jiji.mount(appElement);
                 if (currentRoute.controller.mounted) currentRoute.controller.mounted.call(currentRoute.controller);
                 return ;
             };
