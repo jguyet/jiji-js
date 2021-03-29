@@ -2,7 +2,7 @@
 /**
  *  Jiji Framework 2021
  *  Author : Jeremy Guyet
- *  Version : 0.0.25
+ *  Version : 0.0.26
  */
 const Jiji = {
     device: "browser",// browser || mobile
